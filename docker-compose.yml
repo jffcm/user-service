@@ -1,0 +1,36 @@
+services:
+  user-service:
+    build: .
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - user-service
+  postgres:
+    container_name: postgres
+    image: postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+    networks:
+      - user-service
+volumes:
+  postgres_data:
+networks:
+  user-service:
+    driver: bridge
+  
